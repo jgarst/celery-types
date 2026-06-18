@@ -17,6 +17,7 @@ from typing_extensions import assert_type, override
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
+    from celery.contrib.abortable import AbortableTask
     from celery.contrib.django.task import DjangoTask
 
 app = celery.Celery()
@@ -364,3 +365,7 @@ def test_celery_top_level_exports() -> None:
 def test_djangotask(task: DjangoTask[[int, int], Any]) -> None:
     task.delay_on_commit(1, 2)
     task.apply_async_on_commit((1, 2), countdown=10.0)
+
+
+def test_abortabletask(task: AbortableTask[[], None]) -> None:
+    task.is_aborted()

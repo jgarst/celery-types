@@ -1,4 +1,4 @@
-from typing import Any, Generic, ParamSpec, TypeVar
+from typing import Any, Generic, ParamSpec, TypeVar, overload
 
 from celery import Task
 from celery.result import AsyncResult
@@ -20,4 +20,7 @@ class AbortableTask(Task[_P, _R_co], Generic[_P, _R_co]):
 
     @override
     def AsyncResult(self, task_id: str) -> AbortableAsyncResult[_R_co]: ...  # type: ignore[override]  # pyright: ignore[reportIncompatibleMethodOverride]
+    @overload
     def is_aborted(self, *, task_id: str, **kwargs: Any) -> bool: ...
+    @overload
+    def is_aborted(self, **kwargs: Any) -> bool: ...
