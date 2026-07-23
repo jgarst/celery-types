@@ -81,7 +81,7 @@ def process_rows_3(self: DatabaseTask, param_1: int) -> None:
 
 # Here, a typeignore is needed so that when the overload stops working correctly,
 # pyright and mypy will report that the typeignore is unnecessary.
-@shared_task(base=DatabaseTask, bind=True)  # type: ignore[arg-type]  # pyright: ignore[reportArgumentType]
+@shared_task(base=DatabaseTask, bind=True)  # type: ignore[arg-type]  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
 def process_rows_4(self: int, param_1: int) -> None:
     assert_type(process_rows_4, DatabaseTask)
 
@@ -109,7 +109,7 @@ def process_rows_6(self: DatabaseTask, param_1: int) -> None:
 
 # Here, a typeignore is needed so that when the overload stops working correctly,
 # pyright and mypy will report that the typeignore is unnecessary.
-@database_app.task(name="main.process_rows_7", bind=True)  # type: ignore[arg-type]  # pyright: ignore[reportArgumentType]
+@database_app.task(name="main.process_rows_7", bind=True)  # type: ignore[arg-type]  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
 def process_rows_7(self: int, param_1: int) -> None:
     assert_type(process_rows_7, DatabaseTask)
 
@@ -119,7 +119,7 @@ def process_rows_7(self: int, param_1: int) -> None:
 
 # Here, a typeignore is needed so that when the overload stops working correctly,
 # pyright and mypy will report that the typeignore is unnecessary.
-@database_app.task(name="main.process_rows_8", bind=True, base=Task[..., None])  # type: ignore[arg-type]  # pyright: ignore[reportArgumentType]
+@database_app.task(name="main.process_rows_8", bind=True, base=Task[..., None])  # type: ignore[arg-type]  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
 def binded_task_8_fail(self: int, param_1: int) -> None:
     pass
 
