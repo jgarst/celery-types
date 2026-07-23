@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import errno
 import sys
-from typing import TYPE_CHECKING, Any, Protocol
+from typing import TYPE_CHECKING, Any, ParamSpec, Protocol, TypeVar
 
 import celery
 from celery import Celery, shared_task, signature
@@ -15,11 +15,13 @@ from celery.utils.log import get_task_logger
 from typing_extensions import assert_type, override
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator
+    from collections.abc import Callable, Iterator
 
     from celery.contrib.abortable import AbortableTask
     from celery.contrib.django.task import DjangoTask
 
+P = ParamSpec("P")
+R = TypeVar("R")
 app = celery.Celery()
 
 logger = get_task_logger(__name__)
@@ -38,6 +40,43 @@ def add(x: int, y: int) -> int:
 @app.task(name="main.sub")
 def sub(x: int, y: int) -> int:
     return x - y
+
+
+def test_task_constructor_signature(func: Callable[P, R]) -> None:
+    """
+    The constructor form of the task creation decorator passes the function
+    signature through to the newly created task.
+    """
+    task_from_constructor = app.task(func)
+    assert_type(task_from_constructor, Task[P, R])
+
+
+def test_task_decorator_signature(func: Callable[P, R]) -> None:
+    """
+    The task creation decorator passes the function signature through to the
+    newly created task.
+    """
+
+    @app.task(max_retries=1)
+    def signature_passthrough(*args: P.args, **kwargs: P.kwargs) -> R:
+        return func(*args, **kwargs)
+
+    assert_type(signature_passthrough, Task[P, R])
+
+
+def test_bound_task_decorator_signature(func: Callable[P, R]) -> None:
+    """
+    The bound task creation decorator creates a new task with a function
+    signature that does not include the first `self` parameter.
+    """
+
+    @app.task(bind=True)
+    def signature_passthrough(
+        self: Task[Any, Any], *args: P.args, **kwargs: P.kwargs
+    ) -> R:
+        return func(*args, **kwargs)
+
+    assert_type(signature_passthrough, Task[P, R])
 
 
 class Table(Protocol):
@@ -81,7 +120,7 @@ def process_rows_3(self: DatabaseTask, param_1: int) -> None:
 
 # Here, a typeignore is needed so that when the overload stops working correctly,
 # pyright and mypy will report that the typeignore is unnecessary.
-@shared_task(base=DatabaseTask, bind=True)  # type: ignore[arg-type]  # pyright: ignore[reportArgumentType]
+@shared_task(base=DatabaseTask, bind=True)  # type: ignore[arg-type]  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
 def process_rows_4(self: int, param_1: int) -> None:
     assert_type(process_rows_4, DatabaseTask)
 
@@ -109,7 +148,7 @@ def process_rows_6(self: DatabaseTask, param_1: int) -> None:
 
 # Here, a typeignore is needed so that when the overload stops working correctly,
 # pyright and mypy will report that the typeignore is unnecessary.
-@database_app.task(name="main.process_rows_7", bind=True)  # type: ignore[arg-type]  # pyright: ignore[reportArgumentType]
+@database_app.task(name="main.process_rows_7", bind=True)  # type: ignore[arg-type]  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
 def process_rows_7(self: int, param_1: int) -> None:
     assert_type(process_rows_7, DatabaseTask)
 
@@ -119,7 +158,7 @@ def process_rows_7(self: int, param_1: int) -> None:
 
 # Here, a typeignore is needed so that when the overload stops working correctly,
 # pyright and mypy will report that the typeignore is unnecessary.
-@database_app.task(name="main.process_rows_8", bind=True, base=Task[..., None])  # type: ignore[arg-type]  # pyright: ignore[reportArgumentType]
+@database_app.task(name="main.process_rows_8", bind=True, base=Task[..., None])  # type: ignore[arg-type]  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
 def binded_task_8_fail(self: int, param_1: int) -> None:
     pass
 
